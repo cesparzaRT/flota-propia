@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14161A">
+<title>Tablero de Patio · Flota Propia</title>
+<style>
+:root{
+  --cemento:#EEF0F2; --tinta:#14161A; --acero:#5C646E; --linea:#D6DAE0;
+  --papel:#FFF; --senal:#F5B301; --ruta:#12855A; --alerta:#C4322B; --patio:#2A5EA8; --radio:10px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--cemento);color:var(--tinta);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;line-height:1.4;padding-bottom:90px}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--acero);font-weight:700}
+
+header{position:sticky;top:0;z-index:40;background:var(--tinta);color:#fff;padding:10px 14px 0;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.hazard{height:6px;background:repeating-linear-gradient(45deg,var(--senal) 0 10px,#14161A 10px 20px);margin:0 -14px 10px}
+.hrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:17px;margin:0;letter-spacing:.04em;text-transform:uppercase;font-weight:800}
+h1 small{display:block;font-size:10px;letter-spacing:.16em;color:var(--senal);font-weight:700}
+.reloj{margin-left:auto;text-align:right}
+.reloj b{font-size:20px;font-weight:800}
+.reloj span{display:block;font-size:10px;letter-spacing:.12em;color:#9AA3AE;text-transform:uppercase}
+.tabs{display:flex;gap:2px;margin-top:10px}
+.tab{flex:1;background:none;border:0;border-bottom:3px solid transparent;color:#9AA3AE;font:inherit;
+  font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:10px 4px;cursor:pointer}
+.tab.on{color:#fff;border-bottom-color:var(--senal)}
+.vivo{width:8px;height:8px;border-radius:50%;background:var(--ruta);display:inline-block;margin-right:5px}
+.vivo.off{background:var(--alerta)}
+
+main{max-width:960px;margin:0 auto;padding:14px}
+.panel{display:none}.panel.on{display:block}
+
+.resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;margin-bottom:14px}
+.chip{background:var(--papel);border:1px solid var(--linea);border-radius:var(--radio);padding:9px 8px;
+  text-align:left;cursor:pointer;font:inherit;border-left:4px solid var(--linea)}
+.chip.sel{outline:2px solid var(--tinta);outline-offset:-2px}
+.chip b{display:block;font-size:22px;font-weight:800;line-height:1}
+.chip span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--acero);font-weight:700}
+.chip.c-sin{border-left-color:var(--alerta)}.chip.c-patio{border-left-color:var(--patio)}
+.chip.c-ruta{border-left-color:var(--ruta)}.chip.c-fin{border-left-color:var(--acero)}
+.chip.c-todos{border-left-color:var(--senal)}
+
+.ficha{background:var(--papel);border:1px solid var(--linea);border-radius:var(--radio);margin-bottom:10px;overflow:hidden}
+.ficha.sin{background:repeating-linear-gradient(45deg,#fff 0 14px,#FFF7F6 14px 28px)}
+.fila1{display:flex;align-items:center;gap:10px;padding:10px 12px 6px}
+.nom{font-weight:800;font-size:15px}
+.meta{font-size:11px;color:var(--acero)}
+.badge{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  padding:5px 9px;border-radius:999px;color:#fff;white-space:nowrap}
+.b-sin{background:var(--alerta)}.b-patio{background:var(--patio)}.b-ruta{background:var(--ruta)}.b-fin{background:var(--acero)}
+
+.riel{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;padding:0 12px 10px}
+.hito{border:1px solid var(--linea);background:#F7F8F9;border-radius:6px;padding:7px 2px 6px;text-align:center;
+  cursor:pointer;font:inherit;color:var(--acero);display:flex;flex-direction:column;align-items:center;gap:2px;
+  min-height:52px;justify-content:center;position:relative}
+.hito .lab{font-size:9px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;line-height:1.15}
+.hito .hh{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+.hito.done{background:var(--tinta);border-color:var(--tinta);color:#fff}
+.hito.now{background:var(--senal);border-color:#C99200;color:#14161A;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.hito.next{border-style:dashed;border-color:var(--acero)}
+.hito .yo{position:absolute;top:3px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--senal)}
+.hito.now .yo{background:#14161A}
+
+.pie{display:flex;align-items:center;gap:8px;padding:0 12px 11px;flex-wrap:wrap}
+.mini{border:1px solid var(--linea);background:#fff;border-radius:999px;font:inherit;font-size:11px;
+  font-weight:700;padding:6px 11px;cursor:pointer;color:var(--tinta)}
+.mini.on{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+.undo{border:1px solid var(--linea);background:#fff;border-radius:999px;width:32px;height:32px;
+  font-size:15px;line-height:1;cursor:pointer;color:var(--acero);flex:0 0 auto}
+.undo:disabled{opacity:.3;cursor:default}
+.nota{flex:1;min-width:140px;border:0;border-bottom:1px dashed var(--linea);background:none;font:inherit;
+  font-size:12px;padding:4px 0;color:var(--acero)}
+.nota:focus{outline:none;border-bottom-color:var(--senal);color:var(--tinta)}
+.patchip{border:1px dashed var(--linea);background:#F7F8F9;border-radius:6px;font:inherit;font-size:11px;
+  font-weight:800;letter-spacing:.06em;padding:3px 8px;cursor:pointer;color:var(--tinta);font-variant-numeric:tabular-nums}
+.patchip.libre{color:var(--acero);font-weight:700}
+.patchip.choque{border:1px solid var(--alerta);background:#FDEFEE;color:var(--alerta)}
+.aviso{background:#FDEFEE;border:1px solid #F0C4C1;border-left:4px solid var(--alerta);border-radius:var(--radio);
+  padding:10px 12px;margin-bottom:12px;font-size:13px;color:#8E2620}
+.aviso b{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+
+.barra{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--tinta);color:#fff;display:flex;
+  align-items:center;gap:8px;padding:9px 12px calc(9px + env(safe-area-inset-bottom))}
+.cuenta{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#9AA3AE;font-weight:700;line-height:1.25}
+.cuenta b{display:block;font-size:19px;color:#fff;font-variant-numeric:tabular-nums}
+.cuenta.alerta b{color:var(--senal)}
+.btn{border:0;border-radius:8px;font:inherit;font-weight:800;font-size:13px;padding:11px 14px;cursor:pointer;
+  background:var(--senal);color:#14161A}
+.btn.ghost{background:#2A2E35;color:#fff}
+.btn.oscuro{background:var(--tinta);color:#fff}
+.barra .btn:first-of-type{margin-left:auto}
+
+table{width:100%;border-collapse:collapse;background:var(--papel);border:1px solid var(--linea);border-radius:var(--radio);overflow:hidden}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--acero);text-align:left;padding:9px 10px;
+  background:#F7F8F9;border-bottom:1px solid var(--linea)}
+td{padding:7px 10px;border-bottom:1px solid var(--linea);font-size:14px}
+tr:last-child td{border-bottom:0}
+td input{width:100%;border:1px solid transparent;background:none;font:inherit;padding:5px 6px;border-radius:6px}
+td input:focus{outline:none;border-color:var(--senal);background:#FFFCF2}
+.alta{display:grid;grid-template-columns:1.3fr .9fr .9fr .7fr auto;gap:8px;margin-bottom:12px}
+.alta input{border:1px solid var(--linea);border-radius:8px;padding:11px;font:inherit;background:var(--papel)}
+.alta input:focus{outline:none;border-color:var(--senal)}
+.x{border:0;background:none;color:var(--alerta);font-size:17px;font-weight:800;cursor:pointer;padding:4px 8px;line-height:1}
+.acc{border:1px solid var(--linea);background:#fff;border-radius:6px;font:inherit;font-size:11px;font-weight:700;
+  padding:5px 8px;cursor:pointer;margin-right:4px}
+.patgrid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.pat{border:1px solid var(--linea);background:var(--papel);border-radius:8px;padding:7px 9px;font-size:12px;
+  font-weight:800;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:7px}
+.pat small{font-weight:600;color:var(--acero)}
+.pat .x{font-size:14px;padding:0 2px}
+
+pre.prev{background:var(--papel);border:1px solid var(--linea);border-radius:var(--radio);padding:14px;
+  white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12.5px;line-height:1.55}
+.opts{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:var(--acero)}
+.opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.acciones{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.acciones .btn{flex:1;min-width:130px}
+
+.dia{background:var(--papel);border:1px solid var(--linea);border-radius:var(--radio);padding:12px 14px;margin-bottom:10px}
+.dia h3{margin:0 0 6px;font-size:14px}
+.kv{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--acero)}
+.kv b{color:var(--tinta);font-size:15px;display:block;font-variant-numeric:tabular-nums}
+.vacio{text-align:center;color:var(--acero);padding:34px 16px;font-size:14px}
+.vacio b{display:block;color:var(--tinta);margin-bottom:4px;font-size:15px}
+
+.velo{position:fixed;inset:0;background:rgba(20,22,26,.55);display:none;align-items:flex-end;justify-content:center;z-index:60}
+.velo.on{display:flex}
+.modal{background:var(--papel);width:100%;max-width:440px;border-radius:14px 14px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.modal h4{margin:0 0 2px;font-size:15px}
+.modal p{margin:0 0 14px;font-size:12px;color:var(--acero)}
+.modal .fila{display:flex;gap:8px}
+.modal input[type=time]{flex:1;border:1px solid var(--linea);border-radius:8px;padding:11px;font:inherit}
+.modal .btn{flex:1}
+.ops{display:flex;flex-wrap:wrap;gap:6px;max-height:210px;overflow:auto;margin-bottom:12px}
+.ops button{border:1px solid var(--linea);background:#F7F8F9;border-radius:8px;padding:9px 11px;font:inherit;
+  font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;cursor:pointer}
+.ops button.on{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+.ops button.ocupada{border-color:var(--alerta);color:var(--alerta)}
+
+.entrada{max-width:340px;margin:60px auto;padding:0 18px;text-align:center}
+.entrada h2{font-size:19px;margin:0 0 4px}
+.entrada p{color:var(--acero);font-size:14px;margin:0 0 20px}
+.entrada input{width:100%;border:1px solid var(--linea);border-radius:10px;padding:14px;font:inherit;
+  font-size:17px;text-align:center;letter-spacing:.3em;background:var(--papel)}
+.entrada .btn{width:100%;margin-top:10px;padding:14px}
+.msg{margin-top:12px;font-size:13px;font-weight:700;color:var(--alerta);min-height:18px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:80px;z-index:70;background:var(--tinta);color:#fff;
+  padding:11px 18px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .18s}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:520px){.alta{grid-template-columns:1fr 1fr}.alta button{grid-column:1/-1}.hito .lab{font-size:8px}}
+</style>
+</head>
+<body>
+
+<div id="login" class="entrada">
+  <h2>Tablero de Patio</h2>
+  <p>Clave del panel</p>
+  <input type="password" id="clave" inputmode="numeric" autocomplete="current-password">
+  <button class="btn" id="bEntrar">Entrar</button>
+  <div class="msg" id="msgLogin"></div>
+</div>
+
+<div id="app" hidden>
+<header>
+  <div class="hazard"></div>
+  <div class="hrow">
+    <h1>Tablero de Patio<small id="fechaHoy">—</small></h1>
+    <div class="reloj"><b class="num" id="reloj">--:--</b><span id="conex"><i class="vivo"></i>en vivo</span></div>
+  </div>
+  <nav class="tabs">
+    <button class="tab on" data-p="patio">Patio</button>
+    <button class="tab" data-p="reporte">Reporte</button>
+    <button class="tab" data-p="conductores">Conductores</button>
+    <button class="tab" data-p="historial">Historial</button>
+  </nav>
+</header>
+
+<main>
+  <section class="panel on" id="p-patio">
+    <div id="aviso"></div>
+    <div class="resumen" id="resumen"></div>
+    <div id="lista"></div>
+  </section>
+
+  <section class="panel" id="p-reporte">
+    <p class="eyebrow" style="margin:0 0 8px">Mensaje para el grupo</p>
+    <div class="opts">
+      <label><input type="checkbox" id="opHoras" checked> Horas</label>
+      <label><input type="checkbox" id="opPatente" checked> Patente</label>
+      <label><input type="checkbox" id="opNotas" checked> Notas</label>
+      <label><input type="checkbox" id="opLiq" checked> Liquidación</label>
+    </div>
+    <pre class="prev" id="prev"></pre>
+    <div class="acciones">
+      <button class="btn" id="bCopiar">Copiar mensaje</button>
+      <button class="btn oscuro" id="bCompartir">Compartir</button>
+      <button class="btn oscuro" id="bImagen">Descargar imagen</button>
+    </div>
+    <p class="eyebrow" style="margin:18px 0 8px">Recordatorio</p>
+    <div class="acciones">
+      <button class="btn oscuro" id="bIntervalo">Cada 15 min</button>
+      <button class="btn oscuro" id="bReiniciar">Reiniciar cuenta</button>
+    </div>
+  </section>
+
+  <section class="panel" id="p-conductores">
+    <p class="eyebrow" style="margin:0 0 8px">Patentes de la flota</p>
+    <div class="patgrid" id="patgrid"></div>
+    <div class="alta" style="grid-template-columns:1fr auto">
+      <input id="nPatNueva" placeholder="Agregar patente" maxlength="8" style="text-transform:uppercase">
+      <button class="btn oscuro" id="bAddPat">Agregar patente</button>
+    </div>
+
+    <p class="eyebrow" style="margin:22px 0 8px">Agregar conductor</p>
+    <div class="alta">
+      <input id="nNom" placeholder="Nombre y apellido">
+      <input id="nPat" placeholder="Patente habitual" maxlength="8" list="dlPat" style="text-transform:uppercase">
+      <datalist id="dlPat"></datalist>
+      <input id="nZona" placeholder="Zona / ruta">
+      <input id="nPin" placeholder="PIN 4 díg." maxlength="4" inputmode="numeric">
+      <button class="btn" id="bAgregar">Agregar</button>
+    </div>
+    <table>
+      <thead><tr><th>Conductor</th><th style="width:100px">Patente</th><th style="width:100px">Zona</th>
+        <th style="width:60px">Activo</th><th style="width:190px">Acceso</th><th style="width:36px"></th></tr></thead>
+      <tbody id="tbodyCond"></tbody>
+    </table>
+    <p style="font-size:12px;color:var(--acero);margin-top:10px">
+      El link es personal y no caduca. Si un conductor pierde el PIN, tócale “PIN” y le asignas uno nuevo.</p>
+    <div class="acciones">
+      <button class="btn oscuro" id="bClave">Cambiar clave del panel</button>
+    </div>
+  </section>
+
+  <section class="panel" id="p-historial"><div id="hist"></div></section>
+</main>
+
+<div class="barra">
+  <div class="cuenta" id="cuenta"><b class="num">15:00</b>próximo reporte</div>
+  <input type="date" id="fFecha" style="border:0;border-radius:8px;padding:9px;font:inherit;font-size:12px">
+  <button class="btn" id="bEnviar">Copiar reporte</button>
+</div>
+</div>
+
+<div class="velo" id="velo"><div class="modal">
+  <h4 id="mTit">Ajustar hora</h4><p id="mSub">—</p>
+  <div class="fila">
+    <button class="btn ghost" style="background:#EEF0F2;color:#14161A;flex:0 0 56px" data-min="-5">−5</button>
+    <input type="time" id="mHora">
+    <button class="btn ghost" style="background:#EEF0F2;color:#14161A;flex:0 0 56px" data-min="5">+5</button>
+  </div>
+  <div class="fila" style="margin-top:8px"><button class="btn" id="mGuardar">Guardar hora</button></div>
+  <div class="fila" style="margin-top:8px">
+    <button class="btn ghost" style="background:#EEF0F2;color:#C4322B" id="mBorrar">Borrar marca</button>
+    <button class="btn ghost" style="background:#EEF0F2;color:#14161A" id="mCerrar">Cancelar</button>
+  </div>
+</div></div>
+
+<div class="velo" id="veloPat"><div class="modal">
+  <h4>Patente del día</h4><p id="pSub">—</p>
+  <div class="ops" id="pOpciones"></div>
+  <div class="fila">
+    <button class="btn ghost" style="background:#EEF0F2;color:#14161A" id="pSin">Sin patente</button>
+    <button class="btn ghost" style="background:#EEF0F2;color:#14161A" id="pCerrar">Cerrar</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ====== Configuración: pegar del proyecto Supabase ====== */
+const SUPABASE_URL = "https://TU-PROYECTO.supabase.co";
+const SUPABASE_ANON = "TU_ANON_KEY";
+
+const PASOS = [
+  { k: "camino",     lab: "En<br>camino",   corto: "En camino",       grupo: "patio" },
+  { k: "liquidando", lab: "Liqui-<br>dando", corto: "Liquidando",     grupo: "patio" },
+  { k: "asignada",   lab: "Carga<br>asig.",  corto: "Carga asignada", grupo: "patio" },
+  { k: "cargando",   lab: "Car-<br>gando",   corto: "Cargando",       grupo: "patio" },
+  { k: "ruta",       lab: "Salió<br>a ruta", corto: "En ruta",        grupo: "ruta"  },
+  { k: "fin",        lab: "Ruta<br>lista",   corto: "Ruta terminada", grupo: "fin"   }
+];
+
+let clave = "";
+let data = { conductores: [], patentes: [], fecha: "", hoy: "" };
+let fecha = null;          // null = hoy
+let filtro = "todos";
+let cfg = { intervalo: 15, ultimoEnvio: null };
+let edit = null, editPat = null;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const ls = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* sin storage */ } }
+};
+
+async function rpc(fn, args) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + fn, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON, Authorization: "Bearer " + SUPABASE_ANON },
+    body: JSON.stringify(args || {})
+  });
+  const t = await r.text();
+  if (!r.ok) { let m = t; try { m = JSON.parse(t).message || t; } catch (e) { /* texto plano */ } throw new Error(m); }
+  return t ? JSON.parse(t) : null;
+}
+
+let tT;
+function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(tT); tT = setTimeout(() => t.classList.remove("on"), 2200); }
+function conectado(ok) { $("conex").innerHTML = `<i class="vivo ${ok ? "" : "off"}"></i>${ok ? "en vivo" : "sin conexión"}`; }
+
+/* ====== Entrada ====== */
+$("bEntrar").onclick = entrar;
+$("clave").addEventListener("keydown", e => { if (e.key === "Enter") entrar(); });
+async function entrar() {
+  clave = $("clave").value.trim();
+  if (!clave) return;
+  $("msgLogin").textContent = "";
+  try {
+    data = await rpc("panel_dia", { p_clave: clave, p_fecha: null });
+    ls.set("panel:clave", clave);
+    arrancar();
+  } catch (e) {
+    $("msgLogin").textContent = String(e.message).includes("CLAVE") ? "Clave incorrecta." : "No se pudo conectar.";
+  }
+}
+(function auto() {
+  const g = ls.get("panel:clave");
+  const c = ls.get("panel:cfg");
+  if (c) { try { cfg = Object.assign(cfg, JSON.parse(c)); } catch (e) { /* config corrupta */ } }
+  if (g) { $("clave").value = g; entrar(); }
+})();
+
+function arrancar() {
+  $("login").hidden = true; $("app").hidden = false;
+  $("fFecha").value = data.hoy;
+  $("bIntervalo").textContent = "Cada " + cfg.intervalo + " min";
+  pintarTodo();
+  setInterval(tick, 1000);
+  setInterval(() => { if (document.visibilityState === "visible") cargar(true); }, 10000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") cargar(true); });
+  tick();
+}
+
+async function cargar(silencio) {
+  try {
+    data = await rpc("panel_dia", { p_clave: clave, p_fecha: fecha });
+    conectado(true);
+    pintarTodo();
+  } catch (e) {
+    conectado(false);
+    if (!silencio) toast("No se pudo actualizar");
+  }
+}
+
+/* ====== Modelo ====== */
+const activos = () => (data.conductores || []).filter(c => c.activo !== false);
+function estadoDe(c) {
+  for (let i = PASOS.length - 1; i >= 0; i--) if (c.marcas && c.marcas[PASOS[i].k]) {
+    return { i, grupo: PASOS[i].grupo, texto: PASOS[i].corto, hora: c.marcas[PASOS[i].k] };
+  }
+  return { i: -1, grupo: "sin", texto: "Sin reportar", hora: "" };
+}
+const patenteDe = (c) => c.pat || c.habitual || "";
+function choques() {
+  const map = {};
+  activos().forEach(c => {
+    const p = patenteDe(c);
+    if (!p || estadoDe(c).i < 0) return;
+    (map[p] = map[p] || []).push(c);
+  });
+  return Object.keys(map).filter(p => map[p].length > 1).map(p => ({ pat: p, conds: map[p] }));
+}
+const enChoque = (c) => choques().some(x => x.pat === patenteDe(c));
+function conteos() {
+  const r = { todos: 0, sin: 0, patio: 0, ruta: 0, fin: 0 };
+  activos().forEach(c => { r.todos++; r[estadoDe(c).grupo]++; });
+  return r;
+}
+
+/* ====== Pintado ====== */
+function pintarTodo() { pintarFecha(); pintarAviso(); pintarResumen(); pintarLista(); pintarPatentes(); pintarConductores(); pintarPrev(); }
+
+function pintarFecha() {
+  const [a, m, d] = (data.fecha || "").split("-").map(Number);
+  const dt = new Date(a, (m || 1) - 1, d || 1);
+  const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const mes = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const hoy = data.fecha === data.hoy;
+  $("fechaHoy").textContent = (hoy ? "" : "▲ ") + dias[dt.getDay()] + " " + dt.getDate() + " " + mes[dt.getMonth()];
+}
+
+function pintarAviso() {
+  const ch = choques();
+  $("aviso").innerHTML = ch.map(x => `<div class="aviso"><b>Patente repetida</b>
+    ${esc(x.pat)} está marcada en ${x.conds.map(c => esc(c.nombre)).join(" y ")}.
+    Toca la patente en la ficha para corregir.</div>`).join("");
+}
+
+function pintarResumen() {
+  const c = conteos();
+  const defs = [["todos", "Flota", c.todos], ["sin", "Sin reportar", c.sin], ["patio", "En patio", c.patio],
+                ["ruta", "En ruta", c.ruta], ["fin", "Terminaron", c.fin]];
+  $("resumen").innerHTML = defs.map(([k, t, n]) =>
+    `<button class="chip c-${k} ${filtro === k ? "sel" : ""}" data-f="${k}"><b class="num">${n}</b><span>${t}</span></button>`).join("");
+}
+
+function pintarLista() {
+  const cont = $("lista");
+  if (!activos().length) {
+    cont.innerHTML = `<div class="vacio"><b>Todavía no hay conductores</b>Agrégalos en la pestaña Conductores y mándales su link.</div>`;
+    return;
+  }
+  const lst = activos().filter(c => filtro === "todos" || estadoDe(c).grupo === filtro);
+  if (!lst.length) { cont.innerHTML = `<div class="vacio"><b>Nadie en este estado</b>Toca “Flota” para ver a todos.</div>`; return; }
+  lst.sort((a, b) => estadoDe(a).i - estadoDe(b).i || a.nombre.localeCompare(b.nombre));
+
+  cont.innerHTML = lst.map(c => {
+    const st = estadoDe(c);
+    const riel = PASOS.map((p, i) => {
+      const h = c.marcas[p.k];
+      const cls = h ? (i === st.i ? "now" : "done") : (i === st.i + 1 ? "next" : "");
+      const yo = h && c.origen && c.origen[p.k] === "jefe" ? '<i class="yo"></i>' : "";
+      return `<button class="hito ${cls}" data-c="${c.id}" data-p="${p.k}">${yo}
+        <span class="lab">${p.lab}</span><span class="hh">${h || "·"}</span></button>`;
+    }).join("");
+    const liq = c.marcas.fin
+      ? `<button class="mini ${c.liq === "hoy" ? "on" : ""}" data-liq="hoy" data-c="${c.id}">Liquida hoy</button>
+         <button class="mini ${c.liq === "manana" ? "on" : ""}" data-liq="manana" data-c="${c.id}">Liquida mañana</button>`
+      : (st.i < PASOS.length - 1 ? `<button class="mini" style="background:var(--senal);border-color:#C99200;padding:7px 14px" data-next="${c.id}">Marcar ${PASOS[st.i + 1].corto}</button>` : "");
+    const p = patenteDe(c);
+    return `<article class="ficha ${st.grupo === "sin" ? "sin" : ""}">
+      <div class="fila1">
+        <div><div class="nom">${esc(c.nombre)}</div>
+          <div class="meta" style="display:flex;align-items:center;gap:6px;margin-top:3px">
+            <button class="patchip ${p ? "" : "libre"} ${p && enChoque(c) ? "choque" : ""}" data-pat="${c.id}">${p ? esc(p) : "asignar patente"}</button>
+            ${c.zona ? "<span>" + esc(c.zona) + "</span>" : ""}
+          </div></div>
+        <span class="badge b-${st.grupo}">${st.texto}${st.hora ? " " + st.hora : ""}</span>
+      </div>
+      <div class="riel">${riel}</div>
+      <div class="pie">
+        <button class="undo" data-undo="${c.id}" ${st.i < 0 ? "disabled" : ""} title="Deshacer última marca">↶</button>
+        ${liq}
+        <input class="nota" data-nota="${c.id}" placeholder="Nota (opcional)" value="${esc(c.nota || "")}">
+      </div>
+    </article>`;
+  }).join("");
+}
+
+function pintarPatentes() {
+  $("patgrid").innerHTML = (data.patentes || []).map(p => {
+    const us = (data.conductores || []).filter(c => c.habitual === p).length;
+    return `<span class="pat">${esc(p)}<small>${us} cond.</small><button class="x" data-delpat="${esc(p)}">✕</button></span>`;
+  }).join("") || `<span class="meta">Sin patentes cargadas.</span>`;
+  $("dlPat").innerHTML = (data.patentes || []).map(p => `<option value="${esc(p)}">`).join("");
+}
+
+function linkDe(c) {
+  const base = location.href.split("?")[0].replace(/[^/]*$/, "");
+  return base + "index.html?t=" + c.token;
+}
+
+function pintarConductores() {
+  $("tbodyCond").innerHTML = (data.conductores || []).map(c => `
+    <tr>
+      <td><input data-ed="nombre" data-c="${c.id}" value="${esc(c.nombre)}"></td>
+      <td><input data-ed="habitual" data-c="${c.id}" class="num" list="dlPat" style="text-transform:uppercase" value="${esc(c.habitual || "")}"></td>
+      <td><input data-ed="zona" data-c="${c.id}" value="${esc(c.zona || "")}"></td>
+      <td><input type="checkbox" data-act="${c.id}" ${c.activo !== false ? "checked" : ""}></td>
+      <td><button class="acc" data-link="${c.id}">Copiar link</button><button class="acc" data-pin="${c.id}">PIN</button></td>
+      <td><button class="x" data-del="${c.id}">✕</button></td>
+    </tr>`).join("") || `<tr><td colspan="6" class="vacio">Sin conductores todavía.</td></tr>`;
+}
+
+/* ====== Reporte ====== */
+function armarReporte() {
+  const o = { horas: $("opHoras").checked, pat: $("opPatente").checked, notas: $("opNotas").checked, liq: $("opLiq").checked };
+  const grupos = [{ k: "ruta", t: "EN RUTA", ic: "🟢" }, { k: "patio", t: "EN PATIO", ic: "🟡" },
+                  { k: "fin", t: "RUTA TERMINADA", ic: "⚫" }, { k: "sin", t: "SIN REPORTAR", ic: "🔴" }];
+  const n = new Date();
+  const hh = String(n.getHours()).padStart(2, "0") + ":" + String(n.getMinutes()).padStart(2, "0");
+  const [a, m, d] = (data.fecha || "").split("-");
+  let txt = "*🚚 FLOTA PROPIA · ESTADO DE RUTA*\n" + d + "/" + m + " · " + hh + " hrs\n———————————————\n";
+  grupos.forEach(g => {
+    const lst = activos().filter(c => estadoDe(c).grupo === g.k);
+    if (!lst.length) return;
+    txt += "\n" + g.ic + " *" + g.t + "* (" + lst.length + ")\n";
+    lst.sort((x, y) => x.nombre.localeCompare(y.nombre)).forEach(c => {
+      const st = estadoDe(c), pp = patenteDe(c);
+      let l = "• " + c.nombre;
+      if (o.pat && pp) l += " (" + pp + ")";
+      if (g.k === "patio") l += " — " + st.texto;
+      if (o.horas && st.hora) l += " " + st.hora;
+      if (o.liq && g.k === "fin" && c.liq) l += " — liquida " + (c.liq === "hoy" ? "hoy" : "mañana");
+      if (o.notas && c.nota) l += "\n   ↳ " + c.nota;
+      txt += l + "\n";
+    });
+  });
+  const q = conteos();
+  txt += "———————————————\n" + q.ruta + " en ruta · " + q.patio + " en patio · " + q.fin + " terminaron · " + q.sin + " sin reportar";
+  return txt;
+}
+function pintarPrev() { if ($("prev")) $("prev").textContent = armarReporte(); }
+
+async function copiarReporte() {
+  const t = armarReporte();
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) {
+    const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e2) { /* sin permisos */ }
+    ta.remove();
+  }
+  cfg.ultimoEnvio = Date.now(); ls.set("panel:cfg", JSON.stringify(cfg)); tick();
+  toast("Mensaje copiado · pégalo en el grupo");
+}
+
+function generarImagen() {
+  const grupos = [{ k: "ruta", t: "EN RUTA", col: "#12855A" }, { k: "patio", t: "EN PATIO", col: "#2A5EA8" },
+                  { k: "fin", t: "RUTA TERMINADA", col: "#5C646E" }, { k: "sin", t: "SIN REPORTAR", col: "#C4322B" }];
+  const filas = [];
+  grupos.forEach(g => {
+    const lst = activos().filter(c => estadoDe(c).grupo === g.k).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    if (!lst.length) return;
+    filas.push({ tipo: "h", txt: g.t + "  (" + lst.length + ")", col: g.col });
+    lst.forEach(c => {
+      const st = estadoDe(c), pp = patenteDe(c);
+      let det = st.grupo === "sin" ? "—" : st.texto;
+      if (st.grupo === "fin" && c.liq) det = "Liquida " + (c.liq === "hoy" ? "hoy" : "mañana");
+      filas.push({ tipo: "r", nom: c.nombre + (pp ? "  " + pp : ""), det, hora: st.hora || "", col: g.col });
+    });
+  });
+  const W = 900, top = 132, fh = 46, hh = 52;
+  const alto = top + filas.reduce((a, f) => a + (f.tipo === "h" ? hh : fh), 0) + 56;
+  const cv = document.createElement("canvas"), e2 = window.devicePixelRatio > 1 ? 2 : 1;
+  cv.width = W * e2; cv.height = alto * e2;
+  const x = cv.getContext("2d"); x.scale(e2, e2);
+  x.fillStyle = "#FFF"; x.fillRect(0, 0, W, alto);
+  x.fillStyle = "#14161A"; x.fillRect(0, 0, W, 104);
+  for (let i = -20; i < W; i += 20) { x.fillStyle = "#F5B301"; x.beginPath(); x.moveTo(i, 104); x.lineTo(i + 10, 104); x.lineTo(i + 20, 112); x.lineTo(i + 10, 112); x.closePath(); x.fill(); }
+  const F = "system-ui,Arial,sans-serif", n = new Date();
+  x.fillStyle = "#FFF"; x.font = "800 30px " + F; x.fillText("FLOTA PROPIA · ESTADO DE RUTA", 32, 46);
+  const [aa, mm, dd] = (data.fecha || "").split("-");
+  x.fillStyle = "#F5B301"; x.font = "700 18px " + F;
+  x.fillText(dd + "/" + mm + "/" + aa + "   " + String(n.getHours()).padStart(2, "0") + ":" + String(n.getMinutes()).padStart(2, "0") + " hrs", 32, 78);
+  const q = conteos();
+  x.fillStyle = "#9AA3AE"; x.font = "600 15px " + F; x.textAlign = "right";
+  x.fillText(q.ruta + " en ruta · " + q.patio + " en patio · " + q.sin + " sin reportar", W - 32, 78);
+  x.textAlign = "left";
+  let y = top;
+  filas.forEach(f => {
+    if (f.tipo === "h") {
+      x.fillStyle = f.col; x.fillRect(32, y - 16, 6, 22);
+      x.fillStyle = "#14161A"; x.font = "800 15px " + F; x.fillText(f.txt, 48, y); y += hh - 18;
+      x.strokeStyle = "#D6DAE0"; x.beginPath(); x.moveTo(32, y - 12); x.lineTo(W - 32, y - 12); x.stroke(); y += 18;
+    } else {
+      x.fillStyle = "#14161A"; x.font = "600 19px " + F; x.fillText(f.nom, 48, y);
+      x.fillStyle = f.col; x.font = "700 15px " + F; x.textAlign = "right"; x.fillText(f.det, W - 130, y);
+      x.fillStyle = "#5C646E"; x.font = "700 17px " + F; x.fillText(f.hora, W - 32, y); x.textAlign = "left";
+      x.strokeStyle = "#EEF0F2"; x.beginPath(); x.moveTo(32, y + 14); x.lineTo(W - 32, y + 14); x.stroke(); y += fh;
+    }
+  });
+  cv.toBlob(b => {
+    const u = URL.createObjectURL(b), a = document.createElement("a");
+    a.href = u; a.download = "estado_flota_" + data.fecha + ".png"; a.click();
+    setTimeout(() => URL.revokeObjectURL(u), 3000); toast("Imagen descargada");
+  });
+}
+
+/* ====== Cuenta regresiva ====== */
+function tick() {
+  const n = new Date();
+  $("reloj").textContent = String(n.getHours()).padStart(2, "0") + ":" + String(n.getMinutes()).padStart(2, "0");
+  if (!cfg.ultimoEnvio) { cfg.ultimoEnvio = n.getTime(); ls.set("panel:cfg", JSON.stringify(cfg)); }
+  const resta = Math.max(0, cfg.intervalo * 60000 - (n.getTime() - cfg.ultimoEnvio));
+  const el = $("cuenta");
+  el.querySelector("b").textContent = String(Math.floor(resta / 60000)).padStart(2, "0") + ":" + String(Math.floor((resta % 60000) / 1000)).padStart(2, "0");
+  el.classList.toggle("alerta", resta === 0);
+  el.lastChild.textContent = resta === 0 ? "toca enviar reporte" : "próximo reporte";
+  document.title = (resta === 0 ? "⚠ Enviar reporte · " : "") + "Tablero de Patio";
+}
+
+/* ====== Eventos ====== */
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(z => z.classList.remove("on"));
+  document.querySelectorAll(".panel").forEach(z => z.classList.remove("on"));
+  t.classList.add("on"); $("p-" + t.dataset.p).classList.add("on");
+  if (t.dataset.p === "reporte") pintarPrev();
+  if (t.dataset.p === "historial") cargarHistorial();
+  window.scrollTo(0, 0);
+});
+
+$("resumen").addEventListener("click", e => {
+  const b = e.target.closest("[data-f]"); if (!b) return;
+  filtro = b.dataset.f; pintarResumen(); pintarLista();
+});
+
+$("fFecha").addEventListener("change", e => {
+  fecha = e.target.value === data.hoy ? null : e.target.value;
+  cargar();
+});
+
+$("lista").addEventListener("click", async e => {
+  const h = e.target.closest("[data-p]");
+  if (h) {
+    const c = data.conductores.find(x => x.id === h.dataset.c);
+    if (c.marcas[h.dataset.p]) abrirHora(c, h.dataset.p);
+    else await setMarca(c.id, h.dataset.p, ahora());
+    return;
+  }
+  const nx = e.target.closest("[data-next]");
+  if (nx) {
+    const c = data.conductores.find(x => x.id === nx.dataset.next), st = estadoDe(c);
+    const sig = PASOS[st.i + 1]; if (sig) await setMarca(c.id, sig.k, ahora());
+    return;
+  }
+  const un = e.target.closest("[data-undo]");
+  if (un) {
+    const c = data.conductores.find(x => x.id === un.dataset.undo), st = estadoDe(c);
+    if (st.i >= 0) await setMarca(c.id, PASOS[st.i].k, null);
+    return;
+  }
+  const pt = e.target.closest("[data-pat]");
+  if (pt) { abrirPatente(data.conductores.find(x => x.id === pt.dataset.pat)); return; }
+  const lq = e.target.closest("[data-liq]");
+  if (lq) {
+    const c = data.conductores.find(x => x.id === lq.dataset.c);
+    await setDia(c.id, "liq", c.liq === lq.dataset.liq ? "" : lq.dataset.liq);
+  }
+});
+$("lista").addEventListener("change", async e => {
+  const n = e.target.closest("[data-nota]"); if (!n) return;
+  await setDia(n.dataset.nota, "nota", n.value.trim());
+});
+
+const ahora = () => { const n = new Date(); return String(n.getHours()).padStart(2, "0") + ":" + String(n.getMinutes()).padStart(2, "0"); };
+
+async function setMarca(id, hito, hora) {
+  try { data = await rpc("panel_marca", { p_clave: clave, p_cond: id, p_hito: hito, p_hora: hora, p_fecha: fecha }); pintarTodo(); }
+  catch (e) { toast("No se pudo guardar"); }
+}
+async function setDia(id, campo, valor) {
+  try { data = await rpc("panel_dia_set", { p_clave: clave, p_cond: id, p_campo: campo, p_valor: valor, p_fecha: fecha }); pintarTodo(); }
+  catch (e) { toast("No se pudo guardar"); }
+}
+
+/* Modal hora */
+function abrirHora(c, paso) {
+  edit = { id: c.id, paso };
+  $("mTit").textContent = PASOS.find(p => p.k === paso).corto;
+  $("mSub").textContent = c.nombre;
+  $("mHora").value = c.marcas[paso] || "";
+  $("velo").classList.add("on");
+}
+const cerrarHora = () => { edit = null; $("velo").classList.remove("on"); };
+$("mCerrar").onclick = cerrarHora;
+$("velo").addEventListener("click", e => { if (e.target.id === "velo") cerrarHora(); });
+document.querySelectorAll("[data-min]").forEach(b => b.onclick = () => {
+  const i = $("mHora"), base = i.value || ahora();
+  const [h, m] = base.split(":").map(Number), d = new Date();
+  d.setHours(h, m + Number(b.dataset.min), 0, 0);
+  i.value = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+});
+$("mGuardar").onclick = async () => { if (!edit) return; const v = $("mHora").value; const e = edit; cerrarHora(); if (v) await setMarca(e.id, e.paso, v); };
+$("mBorrar").onclick = async () => { if (!edit) return; const e = edit; cerrarHora(); await setMarca(e.id, e.paso, null); };
+
+/* Modal patente */
+function abrirPatente(c) {
+  editPat = c.id;
+  const actual = patenteDe(c), usadas = {};
+  activos().forEach(o => { if (o.id !== c.id && estadoDe(o).i >= 0) { const p = patenteDe(o); if (p) usadas[p] = o.nombre; } });
+  $("pSub").textContent = c.nombre + (c.habitual ? " · habitual " + c.habitual : "");
+  $("pOpciones").innerHTML = (data.patentes || []).map(p =>
+    `<button data-elige="${esc(p)}" class="${p === actual ? "on" : ""} ${usadas[p] ? "ocupada" : ""}" title="${usadas[p] ? "Hoy la usa " + esc(usadas[p]) : ""}">${esc(p)}</button>`
+  ).join("") || `<span class="meta">Carga las patentes más abajo.</span>`;
+  $("veloPat").classList.add("on");
+}
+const cerrarPat = () => { editPat = null; $("veloPat").classList.remove("on"); };
+$("pCerrar").onclick = cerrarPat;
+$("veloPat").addEventListener("click", e => { if (e.target.id === "veloPat") cerrarPat(); });
+$("pOpciones").addEventListener("click", async e => {
+  const b = e.target.closest("[data-elige]"); if (!b || !editPat) return;
+  const id = editPat; cerrarPat(); await setDia(id, "patente", b.dataset.elige);
+});
+$("pSin").onclick = async () => { if (!editPat) return; const id = editPat; cerrarPat(); await setDia(id, "patente", ""); };
+
+/* Conductores */
+$("bAgregar").onclick = async () => {
+  const n = $("nNom"), p = $("nPat"), z = $("nZona"), pi = $("nPin");
+  if (!n.value.trim()) { n.focus(); toast("Falta el nombre"); return; }
+  if (!/^[0-9]{4}$/.test(pi.value)) { pi.focus(); toast("El PIN son 4 dígitos"); return; }
+  try {
+    data = await rpc("panel_conductor", { p_clave: clave, p_id: null, p_nombre: n.value.trim(),
+      p_habitual: p.value.trim().toUpperCase(), p_zona: z.value.trim(), p_activo: true, p_pin: pi.value });
+    n.value = p.value = z.value = pi.value = ""; n.focus();
+    pintarTodo(); toast("Conductor agregado · cópiale el link");
+  } catch (e) { toast("No se pudo agregar"); }
+};
+
+let tEdit;
+$("tbodyCond").addEventListener("input", e => {
+  const i = e.target.closest("[data-ed]"); if (!i) return;
+  const c = data.conductores.find(x => x.id === i.dataset.c); if (!c) return;
+  c[i.dataset.ed] = i.dataset.ed === "habitual" ? i.value.toUpperCase() : i.value;
+  clearTimeout(tEdit); tEdit = setTimeout(() => guardarCond(c), 700);
+});
+$("tbodyCond").addEventListener("change", async e => {
+  const a = e.target.closest("[data-act]"); if (!a) return;
+  const c = data.conductores.find(x => x.id === a.dataset.act); if (!c) return;
+  c.activo = a.checked; await guardarCond(c);
+});
+async function guardarCond(c) {
+  try {
+    data = await rpc("panel_conductor", { p_clave: clave, p_id: c.id, p_nombre: c.nombre,
+      p_habitual: c.habitual, p_zona: c.zona, p_activo: c.activo, p_pin: null });
+    pintarPatentes(); pintarLista(); pintarPrev();
+  } catch (e) { toast("No se pudo guardar"); }
+}
+$("tbodyCond").addEventListener("click", async e => {
+  const l = e.target.closest("[data-link]");
+  if (l) {
+    const c = data.conductores.find(x => x.id === l.dataset.link);
+    const url = linkDe(c);
+    const msg = c.nombre + ", este es tu link para marcar tu ruta:\n" + url + "\nGuárdalo en la pantalla de inicio. Tu PIN te lo paso aparte.";
+    try { await navigator.clipboard.writeText(msg); toast("Link copiado"); } catch (er) { prompt("Copia el link:", url); }
+    return;
+  }
+  const p = e.target.closest("[data-pin]");
+  if (p) {
+    const c = data.conductores.find(x => x.id === p.dataset.pin);
+    const v = prompt("Nuevo PIN de 4 dígitos para " + c.nombre);
+    if (!v) return;
+    if (!/^[0-9]{4}$/.test(v)) { toast("Deben ser 4 dígitos"); return; }
+    try {
+      data = await rpc("panel_conductor", { p_clave: clave, p_id: c.id, p_nombre: c.nombre,
+        p_habitual: c.habitual, p_zona: c.zona, p_activo: c.activo, p_pin: v });
+      toast("PIN actualizado");
+    } catch (er) { toast("No se pudo cambiar"); }
+    return;
+  }
+  const d = e.target.closest("[data-del]");
+  if (d) {
+    const c = data.conductores.find(x => x.id === d.dataset.del);
+    if (!confirm("¿Eliminar a " + c.nombre + "? Se borra también su historial de marcas.")) return;
+    try { data = await rpc("panel_conductor_del", { p_clave: clave, p_id: c.id }); pintarTodo(); }
+    catch (er) { toast("No se pudo eliminar"); }
+  }
+});
+
+$("bAddPat").onclick = async () => {
+  const i = $("nPatNueva"), v = i.value.trim().toUpperCase();
+  if (!v) { i.focus(); return; }
+  try { data = await rpc("panel_patente", { p_clave: clave, p_patente: v, p_borrar: false }); i.value = ""; pintarTodo(); }
+  catch (e) { toast("No se pudo agregar"); }
+};
+$("nPatNueva").addEventListener("keydown", e => { if (e.key === "Enter") $("bAddPat").click(); });
+$("patgrid").addEventListener("click", async e => {
+  const b = e.target.closest("[data-delpat]"); if (!b) return;
+  if (!confirm("¿Quitar " + b.dataset.delpat + " del catálogo?")) return;
+  try { data = await rpc("panel_patente", { p_clave: clave, p_patente: b.dataset.delpat, p_borrar: true }); pintarTodo(); }
+  catch (er) { toast("No se pudo quitar"); }
+});
+
+$("bClave").onclick = async () => {
+  const v = prompt("Nueva clave del panel (mínimo 4 caracteres)");
+  if (!v) return;
+  try { await rpc("panel_clave", { p_clave: clave, p_nueva: v }); clave = v; ls.set("panel:clave", v); toast("Clave cambiada"); }
+  catch (e) { toast("No se pudo cambiar"); }
+};
+
+/* Historial */
+async function cargarHistorial() {
+  try {
+    const r = await rpc("panel_resumen", { p_clave: clave, p_desde: null });
+    $("hist").innerHTML = (r || []).length ? r.map(d => `<div class="dia">
+      <h3 class="num">${d.fecha}</h3>
+      <div class="kv">
+        <div><b>${d.reportaron}</b>reportaron</div>
+        <div><b>${d.salieron}</b>salieron a ruta</div>
+        <div><b>${d.terminaron}</b>terminaron</div>
+        <div><b class="num">${d.salida_prom || "—"}</b>salida promedio</div>
+      </div></div>`).join("") : `<div class="vacio"><b>Sin datos aún</b>Acá se acumulan los días a medida que marcan.</div>`;
+  } catch (e) { $("hist").innerHTML = `<div class="vacio">No se pudo cargar el historial.</div>`; }
+}
+
+/* Reporte */
+["opHoras", "opPatente", "opNotas", "opLiq"].forEach(id => $(id).addEventListener("change", pintarPrev));
+$("bCopiar").onclick = copiarReporte;
+$("bEnviar").onclick = copiarReporte;
+$("bImagen").onclick = generarImagen;
+$("bCompartir").onclick = async () => {
+  const t = armarReporte();
+  if (navigator.share) {
+    try { await navigator.share({ text: t }); cfg.ultimoEnvio = Date.now(); ls.set("panel:cfg", JSON.stringify(cfg)); tick(); }
+    catch (e) { /* cancelado */ }
+  } else copiarReporte();
+};
+$("bReiniciar").onclick = () => { cfg.ultimoEnvio = Date.now(); ls.set("panel:cfg", JSON.stringify(cfg)); tick(); toast("Cuenta reiniciada"); };
+$("bIntervalo").onclick = () => {
+  const v = parseInt(prompt("¿Cada cuántos minutos quieres el aviso?", cfg.intervalo), 10);
+  if (v > 0) { cfg.intervalo = v; cfg.ultimoEnvio = Date.now(); ls.set("panel:cfg", JSON.stringify(cfg)); $("bIntervalo").textContent = "Cada " + v + " min"; tick(); }
+};
+</script>
+</body>
+</html>

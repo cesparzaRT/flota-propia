@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14161A">
+<title>Mi ruta · Flota Propia</title>
+<style>
+:root{
+  --cemento:#EEF0F2; --tinta:#14161A; --acero:#5C646E; --linea:#D6DAE0;
+  --papel:#FFF; --senal:#F5B301; --ruta:#12855A; --alerta:#C4322B; --patio:#2A5EA8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;background:var(--cemento);color:var(--tinta);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.4;padding-bottom:32px;
+}
+.num{font-variant-numeric:tabular-nums}
+header{background:var(--tinta);color:#fff;padding:14px 18px 16px}
+.hazard{height:6px;background:repeating-linear-gradient(45deg,var(--senal) 0 10px,#14161A 10px 20px)}
+header .rot{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--senal);font-weight:800}
+header h1{margin:2px 0 0;font-size:21px;font-weight:800;letter-spacing:.01em}
+header .sub{font-size:13px;color:#9AA3AE;margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.patbtn{
+  border:1px dashed #4A515B;background:none;color:#fff;border-radius:6px;
+  font:inherit;font-size:13px;font-weight:800;letter-spacing:.06em;padding:3px 9px;cursor:pointer;
+  font-variant-numeric:tabular-nums;
+}
+main{max-width:560px;margin:0 auto;padding:18px}
+
+.paso{
+  width:100%;border:0;border-radius:14px;background:var(--senal);color:#14161A;
+  font:inherit;font-weight:800;font-size:20px;padding:26px 18px;cursor:pointer;
+  box-shadow:0 3px 0 #C99200;text-align:center;line-height:1.25;
+}
+.paso small{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.7;margin-bottom:5px;font-weight:800}
+.paso:active{transform:translateY(2px);box-shadow:0 1px 0 #C99200}
+.paso.listo{background:var(--ruta);color:#fff;box-shadow:0 3px 0 #0B6743;cursor:default}
+.paso[disabled]{opacity:.6}
+
+.linea{margin:20px 0 0;padding:0;list-style:none}
+.linea li{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--papel);
+  border:1px solid var(--linea);border-radius:10px;margin-bottom:7px}
+.linea li.pend{background:none;border-style:dashed;color:var(--acero)}
+.marca{width:26px;height:26px;border-radius:50%;background:var(--tinta);color:#fff;font-size:13px;
+  display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 auto}
+.linea li.pend .marca{background:none;border:1px dashed var(--linea);color:var(--acero)}
+.linea .txt{font-weight:700;font-size:15px}
+.linea .hh{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums;color:var(--acero)}
+
+.liqbox{background:var(--papel);border:1px solid var(--linea);border-radius:12px;padding:14px;margin-top:16px}
+.liqbox p{margin:0 0 10px;font-size:13px;color:var(--acero);font-weight:700}
+.liqbox .fila{display:flex;gap:8px}
+.opt{flex:1;border:1px solid var(--linea);background:#F7F8F9;border-radius:10px;padding:14px 8px;
+  font:inherit;font-weight:800;font-size:15px;cursor:pointer;color:var(--tinta)}
+.opt.on{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+
+.pie{display:flex;gap:8px;margin-top:16px;align-items:center}
+.ghost{border:1px solid var(--linea);background:none;border-radius:10px;font:inherit;font-size:13px;
+  font-weight:700;padding:11px 14px;cursor:pointer;color:var(--acero)}
+.ghost:disabled{opacity:.4}
+.nota{flex:1;border:1px solid var(--linea);border-radius:10px;padding:11px;font:inherit;font-size:14px;background:var(--papel)}
+
+/* PIN */
+.pin{max-width:340px;margin:34px auto;padding:0 18px;text-align:center}
+.pin h2{font-size:19px;margin:0 0 4px}
+.pin p{color:var(--acero);font-size:14px;margin:0 0 22px}
+.puntos{display:flex;gap:12px;justify-content:center;margin-bottom:24px}
+.punto{width:16px;height:16px;border-radius:50%;border:2px solid var(--acero)}
+.punto.on{background:var(--tinta);border-color:var(--tinta)}
+.teclado{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.teclado button{border:1px solid var(--linea);background:var(--papel);border-radius:12px;
+  font:inherit;font-size:24px;font-weight:700;padding:16px 0;cursor:pointer}
+.teclado button.acc{font-size:15px;font-weight:800;color:var(--acero)}
+.msg{margin-top:16px;font-size:14px;font-weight:700;min-height:20px}
+.msg.err{color:var(--alerta)}
+.msg.ok{color:var(--ruta)}
+
+/* Modal patente */
+.velo{position:fixed;inset:0;background:rgba(20,22,26,.55);display:none;align-items:flex-end;justify-content:center;z-index:60}
+.velo.on{display:flex}
+.modal{background:var(--papel);width:100%;max-width:440px;border-radius:14px 14px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+.modal h4{margin:0 0 12px;font-size:16px}
+.ops{display:flex;flex-wrap:wrap;gap:8px;max-height:240px;overflow:auto;margin-bottom:14px}
+.ops button{border:1px solid var(--linea);background:#F7F8F9;border-radius:10px;padding:12px 14px;
+  font:inherit;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;cursor:pointer}
+.ops button.on{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:70;background:var(--tinta);
+  color:#fff;padding:12px 20px;border-radius:999px;font-size:14px;font-weight:700;opacity:0;
+  pointer-events:none;transition:opacity .18s}
+.toast.on{opacity:1}
+.vacio{text-align:center;color:var(--acero);padding:50px 20px}
+.vacio b{display:block;color:var(--tinta);font-size:17px;margin-bottom:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div class="velo" id="velo"><div class="modal">
+  <h4>Patente de hoy</h4>
+  <div class="ops" id="ops"></div>
+  <button class="ghost" style="width:100%" id="pCerrar">Cerrar</button>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ====== Configuración: pegar del proyecto Supabase ====== */
+const SUPABASE_URL = "https://TU-PROYECTO.supabase.co";
+const SUPABASE_ANON = "TU_ANON_KEY";
+
+const PASOS = [
+  { k: "camino",     t: "Voy en camino" },
+  { k: "liquidando", t: "Estoy liquidando" },
+  { k: "asignada",   t: "Tengo carga asignada" },
+  { k: "cargando",   t: "Estoy cargando" },
+  { k: "ruta",       t: "Salí a ruta" },
+  { k: "fin",        t: "Terminé la ruta" }
+];
+const NOMBRE = { camino: "En camino", liquidando: "Liquidando", asignada: "Carga asignada",
+                 cargando: "Cargando", ruta: "Salió a ruta", fin: "Ruta terminada" };
+
+const token = new URLSearchParams(location.search).get("t") || "";
+let pin = "";
+let est = null;
+let ocupado = false;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+
+async function rpc(fn, args) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + fn, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON, Authorization: "Bearer " + SUPABASE_ANON },
+    body: JSON.stringify(args || {})
+  });
+  const t = await r.text();
+  if (!r.ok) {
+    let m = t;
+    try { m = JSON.parse(t).message || t; } catch (e) { /* texto plano */ }
+    throw new Error(m);
+  }
+  return t ? JSON.parse(t) : null;
+}
+
+let tT;
+function toast(m) {
+  const t = $("toast"); t.textContent = m; t.classList.add("on");
+  clearTimeout(tT); tT = setTimeout(() => t.classList.remove("on"), 2200);
+}
+
+/* ====== Arranque ====== */
+(function init() {
+  if (!token) {
+    $("app").innerHTML = `<div class="vacio"><b>Te falta tu link</b>Pídele a tu jefe de flota el link personal para marcar tu ruta.</div>`;
+    return;
+  }
+  const guardado = (() => { try { return localStorage.getItem("pin:" + token) || ""; } catch (e) { return ""; } })();
+  if (guardado) { pin = guardado; entrar(true); } else { pantallaPin(); }
+})();
+
+/* ====== PIN ====== */
+function pantallaPin(msg) {
+  let buf = "";
+  $("app").innerHTML = `
+    <div class="hazard"></div>
+    <div class="pin">
+      <h2>Tu PIN</h2>
+      <p>Los 4 dígitos que te pasó tu jefe de flota.</p>
+      <div class="puntos" id="puntos">${[0,1,2,3].map(() => '<div class="punto"></div>').join("")}</div>
+      <div class="teclado" id="tec">
+        ${[1,2,3,4,5,6,7,8,9].map(n => `<button data-n="${n}">${n}</button>`).join("")}
+        <button class="acc" data-a="borrar">Borrar</button>
+        <button data-n="0">0</button>
+        <button class="acc" data-a="ok">Entrar</button>
+      </div>
+      <div class="msg ${msg ? "err" : ""}" id="msg">${esc(msg || "")}</div>
+    </div>`;
+  const pintar = () => {
+    document.querySelectorAll("#puntos .punto").forEach((p, i) => p.classList.toggle("on", i < buf.length));
+  };
+  $("tec").addEventListener("click", async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.n !== undefined && buf.length < 4) { buf += b.dataset.n; pintar(); if (buf.length === 4) intentar(); }
+    if (b.dataset.a === "borrar") { buf = buf.slice(0, -1); pintar(); }
+    if (b.dataset.a === "ok") intentar();
+  });
+  async function intentar() {
+    if (buf.length !== 4) return;
+    pin = buf;
+    $("msg").textContent = "Revisando…"; $("msg").className = "msg";
+    const ok = await entrar(false);
+    if (!ok) { buf = ""; pintar(); }
+  }
+}
+
+async function entrar(silencioso) {
+  try {
+    est = await rpc("login_conductor", { p_token: token, p_pin: pin });
+    try { localStorage.setItem("pin:" + token, pin); } catch (e) { /* sin storage */ }
+    pintar();
+    return true;
+  } catch (e) {
+    const m = String(e.message || "");
+    try { localStorage.removeItem("pin:" + token); } catch (er) { /* sin storage */ }
+    if (m.includes("PIN")) { pantallaPin("PIN incorrecto, intenta de nuevo."); return false; }
+    if (m.includes("LINK")) { $("app").innerHTML = `<div class="vacio"><b>Link no válido</b>Pídele a tu jefe de flota que te mande el link de nuevo.</div>`; return false; }
+    if (m.includes("INACTIVO")) { $("app").innerHTML = `<div class="vacio"><b>Cuenta desactivada</b>Habla con tu jefe de flota.</div>`; return false; }
+    if (silencioso) { pantallaPin("No se pudo conectar. Revisa tu señal."); return false; }
+    pantallaPin("No se pudo conectar. Revisa tu señal.");
+    return false;
+  }
+}
+
+/* ====== Pantalla principal ====== */
+function siguiente() {
+  for (const p of PASOS) if (!est.marcas[p.k]) return p;
+  return null;
+}
+
+function pintar() {
+  const sig = siguiente();
+  const c = est.conductor || {};
+  const pat = est.pat || "";
+  const hechos = PASOS.filter(p => est.marcas[p.k]);
+
+  $("app").innerHTML = `
+    <div class="hazard"></div>
+    <header>
+      <div class="rot">Flota Propia · mi ruta de hoy</div>
+      <h1>${esc(c.nombre || "")}</h1>
+      <div class="sub">
+        <button class="patbtn" id="bPat">${pat ? esc(pat) : "elegir patente"}</button>
+        ${c.zona ? "<span>" + esc(c.zona) + "</span>" : ""}
+      </div>
+    </header>
+    <main>
+      ${sig
+        ? `<button class="paso" id="bPaso"><small>Toca cuando corresponda</small>${sig.t}</button>`
+        : `<div class="paso listo">Ruta terminada${est.marcas.fin ? " · " + est.marcas.fin : ""}</div>`}
+
+      <ul class="linea">
+        ${PASOS.map(p => est.marcas[p.k]
+          ? `<li><span class="marca">✓</span><span class="txt">${NOMBRE[p.k]}</span><span class="hh">${est.marcas[p.k]}</span></li>`
+          : `<li class="pend"><span class="marca">·</span><span class="txt">${NOMBRE[p.k]}</span></li>`).join("")}
+      </ul>
+
+      ${est.marcas.fin ? `
+      <div class="liqbox">
+        <p>¿Cuándo liquidas esta ruta?</p>
+        <div class="fila">
+          <button class="opt ${est.liq === "hoy" ? "on" : ""}" data-liq="hoy">Hoy</button>
+          <button class="opt ${est.liq === "manana" ? "on" : ""}" data-liq="manana">Mañana</button>
+        </div>
+      </div>` : ""}
+
+      <div class="pie">
+        <button class="ghost" id="bUndo" ${hechos.length ? "" : "disabled"}>↶ Deshacer</button>
+        <input class="nota" id="nota" placeholder="Aviso para el jefe (opcional)" value="${esc(est.nota || "")}">
+      </div>
+    </main>`;
+
+  const bp = $("bPaso");
+  if (bp) bp.onclick = async () => {
+    if (ocupado) return;
+    const s = siguiente(); if (!s) return;
+    ocupado = true; bp.disabled = true;
+    try { est = await rpc("marcar_hito", { p_token: token, p_pin: pin, p_hito: s.k }); pintar(); toast(NOMBRE[s.k] + " marcado"); }
+    catch (e) { bp.disabled = false; toast("No se pudo marcar, revisa tu señal"); }
+    ocupado = false;
+  };
+
+  $("bUndo").onclick = async () => {
+    if (!confirm("¿Borrar tu última marca?")) return;
+    try { est = await rpc("deshacer_ultimo", { p_token: token, p_pin: pin }); pintar(); toast("Marca borrada"); }
+    catch (e) { toast("No se pudo, revisa tu señal"); }
+  };
+
+  $("bPat").onclick = () => {
+    const lst = est.patentes || [];
+    $("ops").innerHTML = lst.length
+      ? lst.map(p => `<button data-p="${esc(p)}" class="${p === pat ? "on" : ""}">${esc(p)}</button>`).join("")
+      : `<span style="color:var(--acero);font-size:14px">Tu jefe todavía no carga las patentes.</span>`;
+    $("velo").classList.add("on");
+  };
+
+  document.querySelectorAll("[data-liq]").forEach(b => b.onclick = async () => {
+    const v = est.liq === b.dataset.liq ? "" : b.dataset.liq;
+    try { est = await rpc("set_dia_cond", { p_token: token, p_pin: pin, p_campo: "liq", p_valor: v }); pintar(); }
+    catch (e) { toast("No se pudo guardar"); }
+  });
+
+  $("nota").addEventListener("change", async e => {
+    try { est = await rpc("set_dia_cond", { p_token: token, p_pin: pin, p_campo: "nota", p_valor: e.target.value.trim() }); toast("Aviso enviado"); }
+    catch (er) { toast("No se pudo enviar el aviso"); }
+  });
+}
+
+$("pCerrar").onclick = () => $("velo").classList.remove("on");
+$("velo").addEventListener("click", e => { if (e.target.id === "velo") $("velo").classList.remove("on"); });
+$("ops").addEventListener("click", async e => {
+  const b = e.target.closest("[data-p]"); if (!b) return;
+  try {
+    est = await rpc("set_dia_cond", { p_token: token, p_pin: pin, p_campo: "patente", p_valor: b.dataset.p });
+    $("velo").classList.remove("on"); pintar(); toast("Patente actualizada");
+  } catch (er) { toast("No se pudo guardar"); }
+});
+
+/* Refresca al volver a la app, por si el jefe corrigió algo */
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState === "visible" && est && pin) {
+    try { est = await rpc("login_conductor", { p_token: token, p_pin: pin }); pintar(); } catch (e) { /* sin señal */ }
+  }
+});
+</script>
+</body>
+</html>
